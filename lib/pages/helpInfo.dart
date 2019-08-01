@@ -78,21 +78,22 @@ class BackgroundImageInfoState extends State<BackgroundImageInfo> {
             ));
     }
 
-
+    bool _isButton(){
+        return _scrollController.position.pixels == _scrollController.position.maxScrollExtent;
+    }
     Widget _renderRow(BuildContext context, int index) {
         if (index == _list.length) {
-            if(_list.length < pageSize){
+            if(_list.length == 0){
                 return null;
             }
-            if (isAll) {
-                return Text("没有更多了");
+            if (isAll || !_isButton()) {
+                return Text("我是有底线的");
+            }
+            if(isLoading){
+                return Text("加载中...");
             }
             //load();
-            return Text("加载中...");
-        }
-        if(index > _list.length){
-            load();
-            return null;
+            return Text("上拉加载更多");
         }
         return Column(
             children: <Widget>[
@@ -122,10 +123,11 @@ class BackgroundImageInfoState extends State<BackgroundImageInfo> {
     }
 
     Future load() async {
-        if (isLoading || isAll) {
-            return null;
+        if (!isLoading) {
+            setState(() {
+              isLoading = true;
+            });
         }
-        isLoading = true;
         final response =
         await http.get('http://localhost:8001/helpInfo/$type?page=$page');
         if (response.statusCode == 200) {
