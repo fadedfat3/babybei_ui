@@ -62,31 +62,35 @@ class BackgroundImageInfoState extends State<BackgroundImageInfo> {
     bool isLoading = false;
     bool isAll = false;
     final type = 1;
-    final pageSize = 10;
     @override
     Widget build(BuildContext context) {
         return Scaffold(
             appBar: AppBar(
                 title: Text("背景图"),
             ),
-            body: ListView.builder(
-                itemCount: _list.length + 1,
-                itemBuilder: (context, index) {
-                    return _renderRow(context, index);
-                },
-                controller: _scrollController,
-            ));
+            body: RefreshIndicator(
+                child: ListView.builder(
+                    itemCount: _list.length + 1,
+                    itemBuilder: (context, index) {
+                        return _renderRow(context, index);
+                    },
+                    controller: _scrollController,
+                    physics: AlwaysScrollableScrollPhysics(),
+                ),
+                onRefresh: _pullDownRefresh
+            )
+       );
     }
 
-    bool _isButton(){
-        return _scrollController.position.pixels == _scrollController.position.maxScrollExtent;
-    }
     Widget _renderRow(BuildContext context, int index) {
         if (index == _list.length) {
             if(_list.length == 0){
+                if(isAll){
+                    return Text("空空如也");
+                }
                 return null;
             }
-            if (isAll || !_isButton()) {
+            if (isAll) {
                 return Text("我是有底线的");
             }
             if(isLoading){
@@ -116,13 +120,23 @@ class BackgroundImageInfoState extends State<BackgroundImageInfo> {
         _scrollController.addListener(() {
             if (_scrollController.position.pixels ==
                 _scrollController.position.maxScrollExtent) {
-                print('滑动到了最底部');
                 load();
             }
         });
     }
 
+    Future _pullDownRefresh() async{
+        _list.clear();
+        isAll = false;
+        page = 0;
+        isLoading = false;
+        load();
+    }
+
     Future load() async {
+        if(isAll){
+            return null;
+        }
         if (!isLoading) {
             setState(() {
               isLoading = true;
